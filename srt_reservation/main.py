@@ -187,11 +187,13 @@ class SRT:
 def success_song():
     duration = 0.2
     freq = 440
-    strs0 = '도레미파솔라시/'
+    strs0 = '도레미파솔솦라시돋렏믿팓솓/'
     strlist0 = list(strs0)
-    freq0 = [261.6256, 293.6648, 329.6276, 349.2282, 391.9954, 440.0, 493.8833, 10.0]
+    freq0 = [261.6256, 293.6648, 329.6276, 349.2282, 391.9954, 415.3047, 440.0, 493.8833, 
+            523.2511, 587.3295, 659.2551, 698.4565, 783.9909, 10.0]
     freq_dict = {strlist0[i]:freq0[i] for i in range(len(freq0))}
-    strs='솔/미/도//레미파레시/도도/도/미/미/솔'
+    # strs='솔/미/도//레미파레시/도도/도/미/미/솔'
+    strs='시/시/시솦믿'  # pokemon. recovery 
     strlist=list(strs)
     myfreq = [freq_dict[ele] for ele in strlist]
 
