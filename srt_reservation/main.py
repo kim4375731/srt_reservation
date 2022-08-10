@@ -18,7 +18,7 @@ chromedriver_path = r'C:\workspace\chromedriver.exe'
 
 
 class SRT:
-    def __init__(self, dpt_stn, arr_stn, dpt_dt, dpt_tm, num_trains_to_check=2, want_reserve=False):
+    def __init__(self, dpt_stn, arr_stn, dpt_dt, dpt_tm, start_num_trains_to_check=1, num_trains_to_check=2, want_reserve=False):
         """
         :param dpt_stn: SRT 출발역
         :param arr_stn: SRT 도착역
@@ -36,6 +36,7 @@ class SRT:
         self.dpt_tm = dpt_tm
 
         self.num_trains_to_check = num_trains_to_check
+        self.start_num_trains_to_check = start_num_trains_to_check
         self.want_reserve = want_reserve
         self.driver = None
 
@@ -113,7 +114,7 @@ class SRT:
         Select(self.driver.find_element(By.ID, "dptTm")).select_by_visible_text(self.dpt_tm)
 
         print("기차를 조회합니다")
-        print(f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후\n{self.num_trains_to_check}개의 기차 중 예약")
+        print(f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후\n{self.start_num_trains_to_check}번째부터\n{self.num_trains_to_check}개의 기차 중 예약")
         print(f"예약 대기 사용: {self.want_reserve}")
 
         # 조회하기 버튼 클릭
@@ -123,7 +124,7 @@ class SRT:
 
     def refresh_search_result(self):
         while True:
-            for i in range(1, self.num_trains_to_check+1):
+            for i in range(self.start_num_trains_to_check, self.start_num_trains_to_check+self.num_trains_to_check):
                 try:
                     standard_seat = self.driver.find_element(By.CSS_SELECTOR, f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(7)").text
                     reservation = self.driver.find_element(By.CSS_SELECTOR, f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(8)").text
@@ -147,6 +148,7 @@ class SRT:
                     if self.driver.find_elements(By.ID, 'isFalseGotoMain'):
                         is_booked = True
                         print("예약 성공")
+                        success_song()
                         return self.driver
                     else:
                         print("잔여석 없음. 다시 검색")
@@ -156,12 +158,14 @@ class SRT:
                 if self.want_reserve:
                     if "신청하기" in reservation:
                         print("예약 대기 완료")
+                        success_song()
                         self.driver.find_element(By.CSS_SELECTOR, f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(8) > a").click()
                         is_booked = True
                         return self.driver
 
             if not self.is_booked:
-                time.sleep(randint(2, 4))  # 2~4초 랜덤으로 기다리기
+                #time.sleep(randint(2, 4))  # 2~4초 랜덤으로 기다리기
+                time.sleep(2)  # 2초 기다리기
 
                 # 다시 조회하기
                 submit = self.driver.find_element(By.XPATH, "//input[@value='조회하기']")
@@ -179,6 +183,20 @@ class SRT:
         self.login()
         self.go_search()
         self.refresh_search_result()
+
+def success_song():
+    duration = 0.2
+    freq = 440
+    strs0 = '도레미파솔라시/'
+    strlist0 = list(strs0)
+    freq0 = [261.6256, 293.6648, 329.6276, 349.2282, 391.9954, 440.0, 493.8833, 10.0]
+    freq_dict = {strlist0[i]:freq0[i] for i in range(len(freq0))}
+    strs='솔/미/도//레미파레시/도도/도/미/미/솔'
+    strlist=list(strs)
+    myfreq = [freq_dict[ele] for ele in strlist]
+
+    for freq in myfreq:
+        os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
 
 
 # if __name__ == "__main__":

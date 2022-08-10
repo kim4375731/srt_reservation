@@ -45,7 +45,7 @@ python quickstart.py --user 1234567890 --psw 000000 --dpt 동탄 --arr 동대구
 **Optional**  
 예약대기 사용 및 검색 결과 상위 3개의 예약 가능 여부 확인
 ```cmd
-python quickstart.py --user 1234567890 --psw 000000 --dpt 동탄 --arr 동대구 --dt 20220117 --tm 08 --num 3 --reserve True
+python quickstart.py --user 1234567890 --psw 000000 --dpt 대전 --arr 울산\(통도사\) --dt 20220813 --tm 08 --snum 3 --num 2 --reserve True
 ```
 
 **실행 결과**
