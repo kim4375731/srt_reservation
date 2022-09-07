@@ -18,6 +18,8 @@ if __name__ == "__main__":
     start_num_trains_to_check = cli_args.snum
     num_trains_to_check = cli_args.num
     want_reserve = cli_args.reserve
+    manual_mode = cli_args.manual_mode
+    manual_nums = cli_args.manual_nums # split with _
 
-    srt = SRT(dpt_stn, arr_stn, dpt_dt, dpt_tm, start_num_trains_to_check, num_trains_to_check, want_reserve)
+    srt = SRT(dpt_stn, arr_stn, dpt_dt, dpt_tm, start_num_trains_to_check, num_trains_to_check, want_reserve, manual_mode, manual_nums)
     srt.run(login_id, login_psw)

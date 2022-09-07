@@ -18,7 +18,7 @@ chromedriver_path = r'C:\workspace\chromedriver.exe'
 
 
 class SRT:
-    def __init__(self, dpt_stn, arr_stn, dpt_dt, dpt_tm, start_num_trains_to_check=1, num_trains_to_check=2, want_reserve=False):
+    def __init__(self, dpt_stn, arr_stn, dpt_dt, dpt_tm, start_num_trains_to_check=1, num_trains_to_check=2, want_reserve=False, manual_mode=False, manual_nums=None):
         """
         :param dpt_stn: SRT 출발역
         :param arr_stn: SRT 도착역
@@ -42,6 +42,8 @@ class SRT:
 
         self.is_booked = False  # 예약 완료 되었는지 확인용
         self.cnt_refresh = 0  # 새로고침 회수 기록
+        self.manual_mode = manual_mode
+        self.manual_nums = [int(i) for i in manual_nums.split('_')]
 
         self.check_input()
 
@@ -114,17 +116,28 @@ class SRT:
         Select(self.driver.find_element(By.ID, "dptTm")).select_by_visible_text(self.dpt_tm)
 
         print("기차를 조회합니다")
-        print(f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후\n{self.start_num_trains_to_check}번째부터\n{self.num_trains_to_check}개의 기차 중 예약")
+        if self.manual_mode:
+            print(f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후")
+            for i in self.manual_nums:
+                print(i, " ", end="")
+            print("\n번째 기차 예약")
+        else:
+            print(f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후\n{self.start_num_trains_to_check}번째부터\n{self.num_trains_to_check}개의 기차 중 예약")
+            
         print(f"예약 대기 사용: {self.want_reserve}")
 
         # 조회하기 버튼 클릭
         self.driver.find_element(By.XPATH, "//input[@value='조회하기']").click()
         self.driver.implicitly_wait(5)
-        time.sleep(1)
+        time.sleep(2)
 
     def refresh_search_result(self):
         while True:
-            for i in range(self.start_num_trains_to_check, self.start_num_trains_to_check+self.num_trains_to_check):
+            if self.manual_mode:
+                mybox = self.manual_nums
+            else:
+                mybox = range(self.start_num_trains_to_check, self.start_num_trains_to_check+self.num_trains_to_check)
+            for i in mybox:
                 try:
                     standard_seat = self.driver.find_element(By.CSS_SELECTOR, f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(7)").text
                     reservation = self.driver.find_element(By.CSS_SELECTOR, f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(8)").text
