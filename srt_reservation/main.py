@@ -182,6 +182,7 @@ class SRT:
 
                 # 다시 조회하기
                 submit = self.driver.find_element(By.XPATH, "//input[@value='조회하기']")
+                print(f'element : {submit}')
                 self.driver.execute_script("arguments[0].click();", submit)
                 self.cnt_refresh += 1
                 print(f"새로고침 {self.cnt_refresh}회")
