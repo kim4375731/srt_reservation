@@ -43,7 +43,7 @@ class SRT:
         self.is_booked = False  # 예약 완료 되었는지 확인용
         self.cnt_refresh = 0  # 새로고침 회수 기록
         self.manual_mode = manual_mode
-        self.manual_nums = [int(i) for i in manual_nums.split('_')]
+        self.manual_nums = [int(i) for i in manual_nums.split('_')] if self.manual_mode is True else None
 
         self.check_input()
 
