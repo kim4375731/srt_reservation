@@ -15,6 +15,9 @@ def parse_cli_args():
     parser.add_argument("--num", help="num of trains to check", type=int, metavar="2", default=2)
     parser.add_argument("--reserve", help="Reserve or not", type=bool, metavar="2", default=False)
 
+    parser.add_argument("--manual-mode", help="manual number of train", type=bool, metavar="2", default=False)
+    parser.add_argument("--manual-nums", help="manual numbers of train, splitted with _", type=str, metavar="2", default=None)
+
     args = parser.parse_args()
 
     return args

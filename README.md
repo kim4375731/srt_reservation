@@ -47,6 +47,10 @@ python quickstart.py --user 1234567890 --psw 000000 --dpt 동탄 --arr 동대구
 ```cmd
 python quickstart.py --user 1234567890 --psw 000000 --dpt 대전 --arr 울산\(통도사\) --dt 20220813 --tm 08 --snum 3 --num 2 --reserve True
 ```
+예약대기 미사용 및 임의 번째의 기차 예약 가능 여부 확인
+```cmd
+python quickstart.py --user 1234567890 --psw 000000 --dpt 대전 --arr 울산\(통도사\) --dt 20220813 --tm 08 --manual-mode True --manual-nums 1_3_5
+```
 
 **실행 결과**
 
