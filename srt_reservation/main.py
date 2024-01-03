@@ -13,7 +13,8 @@ from selenium.common.exceptions import ElementClickInterceptedException, StaleEl
 from srt_reservation.exceptions import InvalidStationNameError, InvalidDateError, InvalidDateFormatError, InvalidTimeFormatError
 from srt_reservation.validation import station_list
 
-chromedriver_path = r'C:\workspace\chromedriver.exe'
+# chromedriver_path = r'C:\workspace\chromedriver.exe'
+chromedriver_path = '/home/yongjae/Downloads/chromedriver-linux64/chromedriver'
 
 class SRT:
     def __init__(self, dpt_stn, arr_stn, dpt_dt, dpt_tm, start_num_trains_to_check=1, num_trains_to_check=2, want_reserve=False, manual_mode=False, manual_nums=None):
