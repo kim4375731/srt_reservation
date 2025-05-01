@@ -8,16 +8,37 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from selenium.common.exceptions import ElementClickInterceptedException, StaleElementReferenceException, WebDriverException
+from selenium.common.exceptions import (
+    ElementClickInterceptedException,
+    StaleElementReferenceException,
+    WebDriverException,
+)
 
-from srt_reservation.exceptions import InvalidStationNameError, InvalidDateError, InvalidDateFormatError, InvalidTimeFormatError
+from srt_reservation.exceptions import (
+    InvalidStationNameError,
+    InvalidDateError,
+    InvalidDateFormatError,
+    InvalidTimeFormatError,
+)
 from srt_reservation.validation import station_list
 
 # chromedriver_path = r'C:\workspace\chromedriver.exe'
-chromedriver_path = '/home/yongjae/Downloads/chromedriver-linux64/chromedriver'
+chromedriver_path = "/home/yongjae/Downloads/chromedriver-linux64/chromedriver"
+
 
 class SRT:
-    def __init__(self, dpt_stn, arr_stn, dpt_dt, dpt_tm, start_num_trains_to_check=1, num_trains_to_check=2, want_reserve=False, manual_mode=False, manual_nums=None):
+    def __init__(
+        self,
+        dpt_stn,
+        arr_stn,
+        dpt_dt,
+        dpt_tm,
+        start_num_trains_to_check=1,
+        num_trains_to_check=2,
+        want_reserve=False,
+        manual_mode=False,
+        manual_nums=None,
+    ):
         """
         :param dpt_stn: SRT 출발역
         :param arr_stn: SRT 도착역
@@ -42,43 +63,68 @@ class SRT:
         self.is_booked = False  # 예약 완료 되었는지 확인용
         self.cnt_refresh = 0  # 새로고침 회수 기록
         self.manual_mode = manual_mode
-        self.manual_nums = [int(i) for i in manual_nums.split('_')] if self.manual_mode is True else None
+        self.manual_nums = (
+            [int(i) for i in manual_nums.split("_")]
+            if self.manual_mode is True
+            else None
+        )
 
         self.check_input()
 
     def check_input(self):
         if self.dpt_stn not in station_list:
-            raise InvalidStationNameError(f"출발역 오류. '{self.dpt_stn}' 은/는 목록에 없습니다.")
+            raise InvalidStationNameError(
+                f"출발역 오류. '{self.dpt_stn}' 은/는 목록에 없습니다."
+            )
         if self.arr_stn not in station_list:
-            raise InvalidStationNameError(f"도착역 오류. '{self.arr_stn}' 은/는 목록에 없습니다.")
+            raise InvalidStationNameError(
+                f"도착역 오류. '{self.arr_stn}' 은/는 목록에 없습니다."
+            )
         if not str(self.dpt_dt).isnumeric():
             raise InvalidDateFormatError("날짜는 숫자로만 이루어져야 합니다.")
         try:
-            datetime.strptime(str(self.dpt_dt), '%Y%m%d')
+            datetime.strptime(str(self.dpt_dt), "%Y%m%d")
         except ValueError:
-            raise InvalidDateError("날짜가 잘못 되었습니다. YYYYMMDD 형식으로 입력해주세요.")
+            raise InvalidDateError(
+                "날짜가 잘못 되었습니다. YYYYMMDD 형식으로 입력해주세요."
+            )
 
     def set_log_info(self, login_id, login_psw):
         self.login_id = login_id
         self.login_psw = login_psw
 
     def run_driver(self):
+        options = webdriver.ChromeOptions()
+        # options.add_argument('--headless')
+        # options.add_argument('--no-sandbox')
+        # options.add_argument("--start-maximized")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-notifications")
+        options.add_experimental_option("excludeSwitches", ["disable-popup-blocking"])
+
         try:
-            self.driver = webdriver.Chrome(executable_path=chromedriver_path)
+            self.driver = webdriver.Chrome(
+                executable_path=chromedriver_path, options=options
+            )
         except WebDriverException:
             self.driver = webdriver.Chrome(ChromeDriverManager().install())
 
     def login(self):
-        self.driver.get('https://etk.srail.co.kr/cmc/01/selectLoginForm.do')
+        self.driver.get("https://etk.srail.co.kr/cmc/01/selectLoginForm.do")
         self.driver.implicitly_wait(15)
-        self.driver.find_element(By.ID, 'srchDvNm01').send_keys(str(self.login_id))
-        self.driver.find_element(By.ID, 'hmpgPwdCphd01').send_keys(str(self.login_psw))
-        self.driver.find_element(By.XPATH, '//*[@id="login-form"]/fieldset/div[1]/div[1]/div[2]/div/div[2]/input').click()
+        self.driver.find_element(By.ID, "srchDvNm01").send_keys(str(self.login_id))
+        self.driver.find_element(By.ID, "hmpgPwdCphd01").send_keys(str(self.login_psw))
+        self.driver.find_element(
+            By.XPATH,
+            '//*[@id="login-form"]/fieldset/div[1]/div[1]/div[2]/div/div[2]/input',
+        ).click()
         self.driver.implicitly_wait(5)
         return self.driver
 
     def check_login(self):
-        menu_text = self.driver.find_element(By.CSS_SELECTOR, "#wrap > div.header.header-e > div.global.clear > div").text
+        menu_text = self.driver.find_element(
+            By.CSS_SELECTOR, "#wrap > div.header.header-e > div.global.clear > div"
+        ).text
         if "환영합니다" in menu_text:
             return True
         else:
@@ -86,38 +132,53 @@ class SRT:
 
     def go_search(self):
         # 기차 조회 페이지로 이동
-        self.driver.get('https://etk.srail.kr/hpg/hra/01/selectScheduleList.do')
+        self.driver.get("https://etk.srail.kr/hpg/hra/01/selectScheduleList.do")
         self.driver.implicitly_wait(5)
 
         # 출발지 입력
-        elm_dpt_stn = self.driver.find_element(By.ID, 'dptRsStnCdNm')
+        elm_dpt_stn = self.driver.find_element(By.ID, "dptRsStnCdNm")
         elm_dpt_stn.clear()
         elm_dpt_stn.send_keys(self.dpt_stn)
 
         # 도착지 입력
-        elm_arr_stn = self.driver.find_element(By.ID, 'arvRsStnCdNm')
+        elm_arr_stn = self.driver.find_element(By.ID, "arvRsStnCdNm")
         elm_arr_stn.clear()
         elm_arr_stn.send_keys(self.arr_stn)
 
         # 출발 날짜 입력
         elm_dpt_dt = self.driver.find_element(By.ID, "dptDt")
-        self.driver.execute_script("arguments[0].setAttribute('style','display: True;')", elm_dpt_dt)
+        self.driver.execute_script(
+            "arguments[0].setAttribute('style','display: True;')", elm_dpt_dt
+        )
         Select(self.driver.find_element(By.ID, "dptDt")).select_by_value(self.dpt_dt)
 
         # 출발 시간 입력
         elm_dpt_tm = self.driver.find_element(By.ID, "dptTm")
-        self.driver.execute_script("arguments[0].setAttribute('style','display: True;')", elm_dpt_tm)
-        Select(self.driver.find_element(By.ID, "dptTm")).select_by_visible_text(self.dpt_tm)
+        self.driver.execute_script(
+            "arguments[0].setAttribute('style','display: True;')", elm_dpt_tm
+        )
+        Select(self.driver.find_element(By.ID, "dptTm")).select_by_visible_text(
+            self.dpt_tm
+        )
+
+        radio_btn = self.driver.find_element(
+            By.XPATH, "//input[@name='trnGpCd' and @value='300']"
+        )
+        radio_btn.click()
 
         print("기차를 조회합니다")
         if self.manual_mode:
-            print(f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후")
+            print(
+                f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후"
+            )
             for i in self.manual_nums:
                 print(i, " ", end="")
             print("\n번째 기차 예약")
         else:
-            print(f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후\n{self.start_num_trains_to_check}번째부터\n{self.num_trains_to_check}개의 기차 중 예약")
-            
+            print(
+                f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후\n{self.start_num_trains_to_check}번째부터\n{self.num_trains_to_check}개의 기차 중 예약"
+            )
+
         print(f"예약 대기 사용: {self.want_reserve}")
 
         self.driver.find_element(By.XPATH, "//input[@value='조회하기']").click()
@@ -126,24 +187,27 @@ class SRT:
 
     def book_ticket(self, standard_seat, i):
         # standard_seat는 일반석 검색 결과 텍스트
-        
+
         if "예약하기" in standard_seat:
             print("예약 가능 클릭")
 
             # Error handling in case that click does not work
             try:
-                self.driver.find_element(By.CSS_SELECTOR,
-                                         f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(7) > a").click()
+                self.driver.find_element(
+                    By.CSS_SELECTOR,
+                    f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(7) > a",
+                ).click()
             except ElementClickInterceptedException as err:
                 print(err)
-                self.driver.find_element(By.CSS_SELECTOR,
-                                         f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(7) > a").send_keys(
-                    Keys.ENTER)
+                self.driver.find_element(
+                    By.CSS_SELECTOR,
+                    f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(7) > a",
+                ).send_keys(Keys.ENTER)
             finally:
                 self.driver.implicitly_wait(3)
 
             # 예약이 성공하면
-            if self.driver.find_elements(By.ID, 'isFalseGotoMain'):
+            if self.driver.find_elements(By.ID, "isFalseGotoMain"):
                 self.is_booked = True
                 print("예약 성공")
                 success_song()
@@ -165,8 +229,10 @@ class SRT:
         if "신청하기" in reservation:
             print("예약 대기 완료")
             success_song()
-            self.driver.find_element(By.CSS_SELECTOR,
-                                     f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(8) > a").click()
+            self.driver.find_element(
+                By.CSS_SELECTOR,
+                f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(8) > a",
+            ).click()
             self.is_booked = True
             return self.is_booked
 
@@ -175,11 +241,20 @@ class SRT:
             if self.manual_mode:
                 mybox = self.manual_nums
             else:
-                mybox = range(self.start_num_trains_to_check, self.start_num_trains_to_check+self.num_trains_to_check)
+                mybox = range(
+                    self.start_num_trains_to_check,
+                    self.start_num_trains_to_check + self.num_trains_to_check,
+                )
             for i in mybox:
                 try:
-                    standard_seat = self.driver.find_element(By.CSS_SELECTOR, f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(7)").text
-                    reservation = self.driver.find_element(By.CSS_SELECTOR, f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(8)").text
+                    standard_seat = self.driver.find_element(
+                        By.CSS_SELECTOR,
+                        f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(7)",
+                    ).text
+                    reservation = self.driver.find_element(
+                        By.CSS_SELECTOR,
+                        f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i}) > td:nth-child(8)",
+                    ).text
                 except StaleElementReferenceException:
                     standard_seat = "매진"
                     reservation = "매진"
@@ -208,18 +283,33 @@ class SRT:
 def success_song():
     duration = 0.2
     freq = 440
-    strs0 = '도레미파솔솦라시돋렏믿팓솓/'
+    strs0 = "도레미파솔솦라시돋렏믿팓솓/"
     strlist0 = list(strs0)
-    freq0 = [261.6256, 293.6648, 329.6276, 349.2282, 391.9954, 415.3047, 440.0, 493.8833, 
-            523.2511, 587.3295, 659.2551, 698.4565, 783.9909, 10.0]
-    freq_dict = {strlist0[i]:freq0[i] for i in range(len(freq0))}
+    freq0 = [
+        261.6256,
+        293.6648,
+        329.6276,
+        349.2282,
+        391.9954,
+        415.3047,
+        440.0,
+        493.8833,
+        523.2511,
+        587.3295,
+        659.2551,
+        698.4565,
+        783.9909,
+        10.0,
+    ]
+    freq_dict = {strlist0[i]: freq0[i] for i in range(len(freq0))}
     # strs='솔/미/도//레미파레시/도도/도/미/미/솔'
-    strs='시/시/시솦믿'  # pokemon. recovery 
-    strlist=list(strs)
+    strs = "시/시/시솦믿"  # pokemon. recovery
+    strlist = list(strs)
     myfreq = [freq_dict[ele] for ele in strlist]
 
     for freq in myfreq:
-        os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
+        os.system("play -nq -t alsa synth {} sine {}".format(duration, freq))
+
 
 #
 # if __name__ == "__main__":
@@ -228,4 +318,3 @@ def success_song():
 #
 #     srt = SRT("동탄", "동대구", "20220917", "08")
 #     srt.run(srt_id, srt_psw)
-
